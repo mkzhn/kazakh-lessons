@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Тесты по казахскому</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 18px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--tg-theme-text-color, #222);
+      background: var(--tg-theme-bg-color, #fff);
+    }
+    .muted { color: var(--tg-theme-hint-color, #888); }
+    h1 { font-size: 23px; margin: 4px 0 8px; }
+    h2 { font-size: 20px; margin: 0 0 14px; }
+    p { line-height: 1.45; }
+    .card {
+      background: var(--tg-theme-secondary-bg-color, #f1f1f1);
+      border-radius: 16px; padding: 16px; margin: 12px 0;
+    }
+    button {
+      display: block; width: 100%; border: 0; border-radius: 13px;
+      padding: 15px; margin: 9px 0; text-align: left; font-size: 16px;
+      color: var(--tg-theme-text-color, #222);
+      background: var(--tg-theme-secondary-bg-color, #eee);
+    }
+    button.primary {
+      text-align: center; font-weight: 700;
+      color: var(--tg-theme-button-text-color, white);
+      background: var(--tg-theme-button-color, #2481cc);
+    }
+    button.correct { background: #238b55; color: white; }
+    button.wrong { background: #c94343; color: white; }
+    button:disabled { opacity: 1; }
+    .center { text-align: center; }
+    .word { font-size: 34px; font-weight: 800; text-align: center; margin: 25px 0; }
+    .progress { height: 7px; border-radius: 9px; overflow: hidden; background: var(--tg-theme-secondary-bg-color, #ddd); }
+    .progress > div { height: 100%; width: 0; background: var(--tg-theme-button-color, #2481cc); transition: width .2s; }
+    .topline { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    .hidden { display: none; }
+    .score { font-size: 48px; font-weight: 800; margin: 12px; }
+    .back { background: transparent; color: var(--tg-theme-link-color, #2481cc); padding-left: 0; }
+  </style>
+</head>
+<body>
+  <main id="app"></main>
+<script>
+const tg = window.Telegram?.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+
+const LEVELS = ["С нуля", "Базовый", "Средний"];
+const SLOTS = ["Пн 18:00", "Ср 18:00", "Пт 18:00", "Сб 11:00"];
+const TOPICS = [
+  ["👋 Вежливость", [
+    ["сәлем", ["спасибо", "привет", "до свидания"], 1],
+    ["рахмет", ["пожалуйста", "извините", "спасибо"], 2],
+    ["кешіріңіз", ["извините", "привет", "пожалуйста"], 0],
+    ["сау бол", ["спасибо", "до свидания", "привет"], 1],
+    ["өтінемін", ["пожалуйста", "извините", "спасибо"], 0]
+  ]],
+  ["🔢 Числа", [
+    ["бір", ["один", "два", "три"], 0],
+    ["үш", ["пять", "три", "четыре"], 1],
+    ["бес", ["пять", "шесть", "семь"], 0],
+    ["жеті", ["шесть", "восемь", "семь"], 2],
+    ["он", ["десять", "девять", "один"], 0]
+  ]],
+  ["👨‍👩‍👧 Семья", [
+    ["ана", ["мама", "папа", "сестра"], 0],
+    ["әке", ["брат", "папа", "дедушка"], 1],
+    ["әже", ["бабушка", "тётя", "мама"], 0],
+    ["үй", ["школа", "дом", "город"], 1],
+    ["дос", ["друг", "враг", "брат"], 0]
+  ]],
+  ["🍞 Еда", [
+    ["нан", ["хлеб", "мясо", "чай"], 0],
+    ["су", ["молоко", "вода", "сок"], 1],
+    ["шай", ["суп", "кофе", "чай"], 2],
+    ["сүт", ["молоко", "масло", "вода"], 0],
+    ["ет", ["рыба", "мясо", "хлеб"], 1]
+  ]]
+];
+
+const app = document.getElementById("app");
+let topicIndex = 0, questionIndex = 0, score = 0, selected = null;
+let bookingLevel = null;
+
+function button(label, action, cls="") {
+  const b = document.createElement("button");
+  b.textContent = label;
+  if (cls) b.className = cls;
+  b.addEventListener("click", action);
+  return b;
+}
+function renderMenu() {
+  app.innerHTML = `<h1>Тесты по казахскому 🇰🇿</h1><p class="muted">Выберите тему и проверьте свои знания</p>`;
+  TOPICS.forEach((topic, i) => app.append(button(topic[0], () => {
+    topicIndex = i; questionIndex = 0; score = 0; selected = null; renderQuestion();
+  })));
+  app.append(button("📝 Записаться на пробный урок", renderLevels, "primary"));
+}
+function renderQuestion() {
+  const [title, questions] = TOPICS[topicIndex];
+  const [word, options, correct] = questions[questionIndex];
+  app.innerHTML = `<div class="topline"><span>${title}</span><span>${questionIndex+1} / ${questions.length}</span></div>
+    <div class="progress"><div style="width:${questionIndex/questions.length*100}%"></div></div>
+    <div class="word">${word}</div><p class="center muted">Выберите правильный перевод</p>`;
+  options.forEach((option, i) => {
+    const b = button(option, () => {
+      if (selected !== null) return;
+      selected = i;
+      if (i === correct) score++;
+      [...app.querySelectorAll("button")].forEach((el, j) => {
+        el.disabled = true;
+        if (j === correct) el.classList.add("correct");
+        else if (j === i) el.classList.add("wrong");
+      });
+      app.append(button(questionIndex === questions.length-1 ? "Посмотреть результат" : "Дальше →", () => {
+        questionIndex++; selected = null;
+        if (questionIndex >= questions.length) renderResult(); else renderQuestion();
+      }, "primary"));
+    });
+    app.append(b);
+  });
+  app.append(button("← К темам", renderMenu, "back"));
+}
+function renderResult() {
+  const total = TOPICS[topicIndex][1].length;
+  app.innerHTML = `<div class="center"><h2>${score === total ? "🏆 Отлично!" : score * 2 >= total ? "👍 Хорошо!" : "💪 Стоит повторить"}</h2>
+    <div class="score">${score} / ${total}</div><p class="muted">${TOPICS[topicIndex][0]}</p></div>`;
+  app.append(button("Пройти ещё раз", () => { questionIndex=0; score=0; selected=null; renderQuestion(); }, "primary"));
+  app.append(button("Другая тема", renderMenu));
+  app.append(button("Записаться на пробный урок", renderLevels, "primary"));
+}
+function renderLevels() {
+  bookingLevel = null;
+  app.innerHTML = `<h2>Ваш уровень?</h2><p class="muted">Выберите вариант, который лучше всего вам подходит</p>`;
+  LEVELS.forEach(level => app.append(button(level, () => { bookingLevel=level; renderSlots(); })));
+  app.append(button("← Назад", renderMenu, "back"));
+}
+function renderSlots() {
+  app.innerHTML = `<h2>Выберите удобное время</h2>`;
+  SLOTS.forEach(slot => app.append(button(slot, () => {
+    const payload = {type:"booking", level:bookingLevel, slot};
+    if (tg) tg.sendData(JSON.stringify(payload));
+    app.innerHTML = `<div class="center"><div class="score">✅</div><h2>Заявка отправлена!</h2>
+      <p>${bookingLevel} · ${slot}</p><p class="muted">Мы напишем вам в Telegram.</p></div>`;
+    app.append(button("Вернуться в меню", renderMenu, "primary"));
+  })));
+  app.append(button("← Назад", renderLevels, "back"));
+}
+renderMenu();
+</script>
+</body>
+</html>
