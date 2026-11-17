@@ -196,106 +196,133 @@ textarea {
 </div>
 
 <script>
-const CONTACT_USER = "kaz_uroki";
-const LEVELS = ["С нуля", "Базовый", "Средний", "Продвинутый"];
-const DAYS = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
-const TIMES = Array.from({length: 13}, (_, i) => `${String(i + 10).padStart(2, "0")}:00`);
-const WHO = ["Для себя", "Для ребёнка"];
-const GOALS = ["Для общения", "Для учёбы", "Для работы", "Для переезда", "Для себя"];
-const TOPIC_NAMES = ["Вежливость", "Числа", "Семья", "Еда"];
+(function () {
+  var CONTACT_USER = "kaz_uroki";
+  var LEVELS = ["С нуля", "Базовый", "Средний", "Продвинутый"];
+  var DAYS = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
+  var TIMES = [];
+  var WHO = ["Для себя", "Для ребёнка"];
+  var GOALS = ["Для общения", "Для учёбы", "Для работы", "Для переезда", "Для себя"];
+  var TOPIC_NAMES = ["Вежливость", "Числа", "Семья", "Еда"];
+  var selected = { levels: null, days: null, times: null, who: 0, goal: 0 };
 
-const $ = id => document.getElementById(id);
-const selected = {
-  levels: null,
-  days: null,
-  times: null,
-  who: 0,
-  goal: 0
-};
-const groups = {
-  levels: LEVELS,
-  days: DAYS,
-  times: TIMES,
-  who: WHO,
-  goal: GOALS
-};
+  function byId(id) { return document.getElementById(id); }
+  function makeTimes() {
+    var i, hour;
+    for (i = 10; i <= 22; i++) {
+      hour = i < 10 ? "0" + i : String(i);
+      TIMES.push(hour + ":00");
+    }
+  }
+  function quizLine() {
+    var query = window.location.search || "";
+    var topicMatch = /(?:\?|&)t=(\d+)/.exec(query);
+    var scoreMatch = /(?:\?|&)s=(\d+)/.exec(query);
+    var totalMatch = /(?:\?|&)n=(\d+)/.exec(query);
+    var topic = topicMatch ? parseInt(topicMatch[1], 10) : -1;
+    var score = scoreMatch ? parseInt(scoreMatch[1], 10) : -1;
+    var total = totalMatch ? parseInt(totalMatch[1], 10) : -1;
+    if (topic < 0 || topic >= TOPIC_NAMES.length || score < 0 ||
+        total <= 0 || score > total || total >= 100) return "";
+    return "Результат теста «" + TOPIC_NAMES[topic] + "»: " + score + " из " + total;
+  }
+  function renderGroup(name, values) {
+    var host = byId(name);
+    if (!host) return;
+    var html = "";
+    var i, active;
+    for (i = 0; i < values.length; i++) {
+      active = selected[name] === i ? " on" : "";
+      html += '<button type="button" class="chip' + active +
+        '" data-group="' + name + '" data-index="' + i + '">' +
+        values[i] + '</button>';
+    }
+    host.innerHTML = html;
+  }
+  function draw() {
+    renderGroup("levels", LEVELS);
+    renderGroup("days", DAYS);
+    renderGroup("times", TIMES);
+    renderGroup("who", WHO);
+    renderGroup("goal", GOALS);
 
-function quizLine() {
-  const params = new URLSearchParams(location.search);
-  const topic = Number.parseInt(params.get("t"), 10);
-  const score = Number.parseInt(params.get("s"), 10);
-  const total = Number.parseInt(params.get("n"), 10);
-
-  if (!(topic >= 0 && topic < TOPIC_NAMES.length &&
-        score >= 0 && total > 0 && score <= total && total < 100)) {
-    return "";
+    if (selected.days === null) {
+      byId("chosenTime").textContent = "Сначала выберите день недели.";
+    } else if (selected.times === null) {
+      byId("chosenTime").textContent = "День выбран: " + DAYS[selected.days] + ". Теперь выберите время.";
+    } else {
+      byId("chosenTime").textContent = "Выбрано: " + DAYS[selected.days] + ", " + TIMES[selected.times] + ".";
+    }
+    byId("go").disabled = selected.days === null || selected.times === null;
+  }
+  function buildText() {
+    var lines = [
+      "Здравствуйте! Хочу записаться на пробный урок казахского.",
+      "Удобный день: " + DAYS[selected.days],
+      "Удобное время: " + TIMES[selected.times],
+      "Занятия: " + WHO[selected.who].toLowerCase(),
+      "Цель: " + GOALS[selected.goal].toLowerCase()
+    ];
+    var quiz, note;
+    if (selected.levels !== null) lines.splice(1, 0, "Уровень: " + LEVELS[selected.levels]);
+    quiz = quizLine();
+    if (quiz) lines.push(quiz);
+    note = byId("note").value.replace(/^\s+|\s+$/g, "");
+    if (note) lines.push("Комментарий: " + note);
+    return lines.join("\n");
   }
 
-  return `Результат теста «${TOPIC_NAMES[topic]}»: ${score} из ${total}`;
-}
+  function init() {
+    makeTimes();
+    document.addEventListener("click", function (event) {
+      var target = event.target;
+      while (target && target !== document && !(target.getAttribute && target.getAttribute("data-group"))) {
+        target = target.parentNode;
+      }
+      if (!target || target === document) return;
+      var group = target.getAttribute("data-group");
+      var index = parseInt(target.getAttribute("data-index"), 10);
+      if (group !== "levels" && group !== "days" && group !== "times" &&
+          group !== "who" && group !== "goal") return;
+      selected[group] = index;
+      if (group === "days") selected.times = null;
+      byId("res").hidden = true;
+      draw();
+    });
 
-function renderGroup(name) {
-  $(name).innerHTML = groups[name].map((value, index) => {
-    const active = selected[name] === index ? " on" : "";
-    return `<button type="button" class="chip${active}" data-group="${name}" data-index="${index}">${value}</button>`;
-  }).join("");
-}
+    byId("go").addEventListener("click", function () {
+      byId("txt").textContent = buildText();
+      byId("res").hidden = false;
+      if (byId("res").scrollIntoView) byId("res").scrollIntoView({ behavior: "smooth", block: "center" });
+    });
 
-function draw() {
-  Object.keys(groups).forEach(renderGroup);
+    byId("copy").addEventListener("click", function () {
+      var text = byId("txt").textContent;
+      var field = document.createElement("textarea");
+      field.value = text;
+      document.body.appendChild(field);
+      field.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(field);
+      byId("copy").textContent = "Скопировано ✓";
+      window.setTimeout(function () {
+        byId("copy").textContent = "📋 Скопировать текст";
+      }, 2000);
+    });
 
-  $("chosenTime").textContent = selected.days === null
-    ? "Сначала выберите день недели."
-    : selected.times === null
-      ? `День выбран: ${DAYS[selected.days]}. Теперь выберите время.`
-      : `Выбрано: ${DAYS[selected.days]}, ${TIMES[selected.times]}.`;
-
-  $("go").disabled =
-    selected.days === null ||
-    selected.times === null;
-}
-
-function buildText() {
-  const lines = [
-    "Здравствуйте! Хочу записаться на пробный урок казахского.",
-    `Удобный день: ${DAYS[selected.days]}`,
-    `Удобное время: ${TIMES[selected.times]}`,
-    `Занятия: ${WHO[selected.who].toLowerCase()}`,
-    `Цель: ${GOALS[selected.goal].toLowerCase()}`
-  ];
-
-  if (selected.levels !== null) {
-    lines.splice(1, 0, `Уровень: ${LEVELS[selected.levels]}`);
+    byId("write").href = "https://t.me/" + CONTACT_USER;
+    byId("write").textContent = "✉️ Написать @" + CONTACT_USER;
+    var initialQuiz = quizLine();
+    if (initialQuiz) byId("score").innerHTML = '<span class="score">' + initialQuiz + '</span>';
+    draw();
   }
 
-  const quiz = quizLine();
-  if (quiz) lines.push(quiz);
-
-  const note = $("note").value.trim();
-  if (note) lines.push(`Комментарий: ${note}`);
-
-  return lines.join("\n");
-}
-
-document.addEventListener("click", event => {
-  const button = event.target.closest("[data-group]");
-  if (!button) return;
-
-  const group = button.dataset.group;
-  const index = Number(button.dataset.index);
-
-  selected[group] = index;
-
-  if (group === "days") {
-    selected.times = null;
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
   }
-
-  $("res").hidden = true;
-  draw();
-});
-
-$("go").addEventListener("click", () => {
-  $("txt").textContent = buildText();
-  $("res").hidden = false;
-  $("res").scrollIntoView({behavior: "smooth", block: "center"});
-});
+})();
+</script>
+</body>
+</html>
