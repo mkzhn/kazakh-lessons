@@ -1,159 +1,301 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>Тесты по казахскому</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    :root { color-scheme: light dark; }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; padding: 18px;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--tg-theme-text-color, #222);
-      background: var(--tg-theme-bg-color, #fff);
-    }
-    .muted { color: var(--tg-theme-hint-color, #888); }
-    h1 { font-size: 23px; margin: 4px 0 8px; }
-    h2 { font-size: 20px; margin: 0 0 14px; }
-    p { line-height: 1.45; }
-    .card {
-      background: var(--tg-theme-secondary-bg-color, #f1f1f1);
-      border-radius: 16px; padding: 16px; margin: 12px 0;
-    }
-    button {
-      display: block; width: 100%; border: 0; border-radius: 13px;
-      padding: 15px; margin: 9px 0; text-align: left; font-size: 16px;
-      color: var(--tg-theme-text-color, #222);
-      background: var(--tg-theme-secondary-bg-color, #eee);
-    }
-    button.primary {
-      text-align: center; font-weight: 700;
-      color: var(--tg-theme-button-text-color, white);
-      background: var(--tg-theme-button-color, #2481cc);
-    }
-    button.correct { background: #238b55; color: white; }
-    button.wrong { background: #c94343; color: white; }
-    button:disabled { opacity: 1; }
-    .center { text-align: center; }
-    .word { font-size: 34px; font-weight: 800; text-align: center; margin: 25px 0; }
-    .progress { height: 7px; border-radius: 9px; overflow: hidden; background: var(--tg-theme-secondary-bg-color, #ddd); }
-    .progress > div { height: 100%; width: 0; background: var(--tg-theme-button-color, #2481cc); transition: width .2s; }
-    .topline { display: flex; justify-content: space-between; margin-bottom: 8px; }
-    .hidden { display: none; }
-    .score { font-size: 48px; font-weight: 800; margin: 12px; }
-    .back { background: transparent; color: var(--tg-theme-link-color, #2481cc); padding-left: 0; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Запись на пробный урок казахского</title>
+<style>
+:root {
+  --bg: #f4f7f9;
+  --card: #fff;
+  --tx: #14212b;
+  --hint: #6b7c88;
+  --acc: #0096b4;
+  --accx: #fff;
+  --gold: #fec50c;
+  --line: #dfe7ec;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f171d;
+    --card: #18232b;
+    --tx: #eaf1f5;
+    --hint: #8fa3b0;
+    --acc: #27b5d1;
+    --accx: #06222a;
+    --line: #26343e;
+  }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--tx);
+  font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+.wrap { max-width: 520px; margin: 0 auto; padding: 20px 16px 40px; }
+header { margin-bottom: 18px; }
+header:before {
+  content: "";
+  display: block;
+  width: 48px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--gold);
+  margin-bottom: 12px;
+}
+h1 { font-size: 1.6em; line-height: 1.2; margin: 0 0 6px; }
+.hint { color: var(--hint); margin: 0; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.card h2 {
+  font-size: .85em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--hint);
+  margin: 0 0 5px;
+}
+.sub { color: var(--hint); font-size: .9em; margin: 0 0 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--tx);
+  font: inherit;
+  padding: 10px 13px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.chip.on {
+  background: var(--acc);
+  border-color: var(--acc);
+  color: var(--accx);
+  font-weight: 600;
+}
+.btn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--acc);
+  color: var(--accx);
+  font: inherit;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  margin-top: 10px;
+}
+.btn:disabled { opacity: .4; cursor: default; }
+.btn.alt { background: transparent; border: 1px solid var(--acc); color: var(--acc); }
+.res { border-color: var(--acc); }
+.res[hidden] { display: none; }
+pre {
+  margin: 0 0 4px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font: inherit;
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 12px;
+  user-select: text;
+  -webkit-user-select: text;
+}
+ol { margin: 12px 0 0; padding-left: 20px; color: var(--hint); font-size: .92em; }
+.score {
+  display: inline-block;
+  background: var(--gold);
+  color: #14212b;
+  border-radius: 10px;
+  padding: 4px 10px;
+  font-weight: 600;
+  font-size: .9em;
+  margin-top: 10px;
+}
+textarea {
+  width: 100%;
+  min-height: 76px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 11px;
+  color: var(--tx);
+  background: var(--bg);
+  font: inherit;
+}
+.selection {
+  color: var(--hint);
+  font-size: .9em;
+  margin: 12px 0 0;
+}
+</style>
 </head>
 <body>
-  <main id="app"></main>
+<div class="wrap">
+  <header>
+    <h1>Запись на пробный урок казахского</h1>
+    <p class="hint">Выберите удобный день и время. Мы подготовим для вас пробное занятие.</p>
+    <div id="score"></div>
+  </header>
+
+  <section class="card">
+    <h2>Ваш уровень (необязательно)</h2>
+    <p class="sub">Можно пропустить, если пока не знаете свой уровень.</p>
+    <div class="chips" id="levels"></div>
+  </section>
+
+  <section class="card">
+    <h2>День недели</h2>
+    <p class="sub">Выберите день, когда вам удобно заниматься.</p>
+    <div class="chips" id="days"></div>
+  </section>
+
+  <section class="card">
+    <h2>Время</h2>
+    <p class="sub">Можно выбрать любой час с 10:00 до 22:00.</p>
+    <div class="chips" id="times"></div>
+    <p class="selection" id="chosenTime">Сначала выберите день недели.</p>
+  </section>
+
+  <section class="card">
+    <h2>Для кого занятия</h2>
+    <div class="chips" id="who"></div>
+  </section>
+
+  <section class="card">
+    <h2>Ваша цель</h2>
+    <div class="chips" id="goal"></div>
+  </section>
+
+  <section class="card">
+    <h2>Дополнительно</h2>
+    <p class="sub">Например: «удобнее заниматься после школы» или «хочу подтянуть разговорный казахский».</p>
+    <textarea id="note" maxlength="300" placeholder="Комментарий (необязательно)"></textarea>
+  </section>
+
+  <button class="btn" id="go" disabled>Сформировать заявку</button>
+
+  <section class="card res" id="res" hidden style="margin-top:14px">
+    <h2>Ваша заявка</h2>
+    <pre id="txt"></pre>
+    <button class="btn" id="copy">📋 Скопировать текст</button>
+    <a class="btn alt" id="write" target="_blank" rel="noopener">✉️ Написать</a>
+    <ol>
+      <li>Скопируйте готовую заявку.</li>
+      <li>Нажмите «Написать», чтобы открыть Telegram.</li>
+      <li>Вставьте текст в чат школы и отправьте.</li>
+    </ol>
+  </section>
+</div>
+
 <script>
-const tg = window.Telegram?.WebApp;
-if (tg) { tg.ready(); tg.expand(); }
+const CONTACT_USER = "kaz_uroki";
+const LEVELS = ["С нуля", "Базовый", "Средний", "Продвинутый"];
+const DAYS = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
+const TIMES = Array.from({length: 13}, (_, i) => `${String(i + 10).padStart(2, "0")}:00`);
+const WHO = ["Для себя", "Для ребёнка"];
+const GOALS = ["Для общения", "Для учёбы", "Для работы", "Для переезда", "Для себя"];
+const TOPIC_NAMES = ["Вежливость", "Числа", "Семья", "Еда"];
 
-const LEVELS = ["С нуля", "Базовый", "Средний"];
-const SLOTS = ["Пн 18:00", "Ср 18:00", "Пт 18:00", "Сб 11:00"];
-const TOPICS = [
-  ["👋 Вежливость", [
-    ["сәлем", ["спасибо", "привет", "до свидания"], 1],
-    ["рахмет", ["пожалуйста", "извините", "спасибо"], 2],
-    ["кешіріңіз", ["извините", "привет", "пожалуйста"], 0],
-    ["сау бол", ["спасибо", "до свидания", "привет"], 1],
-    ["өтінемін", ["пожалуйста", "извините", "спасибо"], 0]
-  ]],
-  ["🔢 Числа", [
-    ["бір", ["один", "два", "три"], 0],
-    ["үш", ["пять", "три", "четыре"], 1],
-    ["бес", ["пять", "шесть", "семь"], 0],
-    ["жеті", ["шесть", "восемь", "семь"], 2],
-    ["он", ["десять", "девять", "один"], 0]
-  ]],
-  ["👨‍👩‍👧 Семья", [
-    ["ана", ["мама", "папа", "сестра"], 0],
-    ["әке", ["брат", "папа", "дедушка"], 1],
-    ["әже", ["бабушка", "тётя", "мама"], 0],
-    ["үй", ["школа", "дом", "город"], 1],
-    ["дос", ["друг", "враг", "брат"], 0]
-  ]],
-  ["🍞 Еда", [
-    ["нан", ["хлеб", "мясо", "чай"], 0],
-    ["су", ["молоко", "вода", "сок"], 1],
-    ["шай", ["суп", "кофе", "чай"], 2],
-    ["сүт", ["молоко", "масло", "вода"], 0],
-    ["ет", ["рыба", "мясо", "хлеб"], 1]
-  ]]
-];
+const $ = id => document.getElementById(id);
+const selected = {
+  levels: null,
+  days: null,
+  times: null,
+  who: 0,
+  goal: 0
+};
+const groups = {
+  levels: LEVELS,
+  days: DAYS,
+  times: TIMES,
+  who: WHO,
+  goal: GOALS
+};
 
-const app = document.getElementById("app");
-let topicIndex = 0, questionIndex = 0, score = 0, selected = null;
-let bookingLevel = null;
+function quizLine() {
+  const params = new URLSearchParams(location.search);
+  const topic = Number.parseInt(params.get("t"), 10);
+  const score = Number.parseInt(params.get("s"), 10);
+  const total = Number.parseInt(params.get("n"), 10);
 
-function button(label, action, cls="") {
-  const b = document.createElement("button");
-  b.textContent = label;
-  if (cls) b.className = cls;
-  b.addEventListener("click", action);
-  return b;
+  if (!(topic >= 0 && topic < TOPIC_NAMES.length &&
+        score >= 0 && total > 0 && score <= total && total < 100)) {
+    return "";
+  }
+
+  return `Результат теста «${TOPIC_NAMES[topic]}»: ${score} из ${total}`;
 }
-function renderMenu() {
-  app.innerHTML = `<h1>Тесты по казахскому 🇰🇿</h1><p class="muted">Выберите тему и проверьте свои знания</p>`;
-  TOPICS.forEach((topic, i) => app.append(button(topic[0], () => {
-    topicIndex = i; questionIndex = 0; score = 0; selected = null; renderQuestion();
-  })));
-  app.append(button("📝 Записаться на пробный урок", renderLevels, "primary"));
+
+function renderGroup(name) {
+  $(name).innerHTML = groups[name].map((value, index) => {
+    const active = selected[name] === index ? " on" : "";
+    return `<button type="button" class="chip${active}" data-group="${name}" data-index="${index}">${value}</button>`;
+  }).join("");
 }
-function renderQuestion() {
-  const [title, questions] = TOPICS[topicIndex];
-  const [word, options, correct] = questions[questionIndex];
-  app.innerHTML = `<div class="topline"><span>${title}</span><span>${questionIndex+1} / ${questions.length}</span></div>
-    <div class="progress"><div style="width:${questionIndex/questions.length*100}%"></div></div>
-    <div class="word">${word}</div><p class="center muted">Выберите правильный перевод</p>`;
-  options.forEach((option, i) => {
-    const b = button(option, () => {
-      if (selected !== null) return;
-      selected = i;
-      if (i === correct) score++;
-      [...app.querySelectorAll("button")].forEach((el, j) => {
-        el.disabled = true;
-        if (j === correct) el.classList.add("correct");
-        else if (j === i) el.classList.add("wrong");
-      });
-      app.append(button(questionIndex === questions.length-1 ? "Посмотреть результат" : "Дальше →", () => {
-        questionIndex++; selected = null;
-        if (questionIndex >= questions.length) renderResult(); else renderQuestion();
-      }, "primary"));
-    });
-    app.append(b);
-  });
-  app.append(button("← К темам", renderMenu, "back"));
+
+function draw() {
+  Object.keys(groups).forEach(renderGroup);
+
+  $("chosenTime").textContent = selected.days === null
+    ? "Сначала выберите день недели."
+    : selected.times === null
+      ? `День выбран: ${DAYS[selected.days]}. Теперь выберите время.`
+      : `Выбрано: ${DAYS[selected.days]}, ${TIMES[selected.times]}.`;
+
+  $("go").disabled =
+    selected.days === null ||
+    selected.times === null;
 }
-function renderResult() {
-  const total = TOPICS[topicIndex][1].length;
-  app.innerHTML = `<div class="center"><h2>${score === total ? "🏆 Отлично!" : score * 2 >= total ? "👍 Хорошо!" : "💪 Стоит повторить"}</h2>
-    <div class="score">${score} / ${total}</div><p class="muted">${TOPICS[topicIndex][0]}</p></div>`;
-  app.append(button("Пройти ещё раз", () => { questionIndex=0; score=0; selected=null; renderQuestion(); }, "primary"));
-  app.append(button("Другая тема", renderMenu));
-  app.append(button("Записаться на пробный урок", renderLevels, "primary"));
+
+function buildText() {
+  const lines = [
+    "Здравствуйте! Хочу записаться на пробный урок казахского.",
+    `Удобный день: ${DAYS[selected.days]}`,
+    `Удобное время: ${TIMES[selected.times]}`,
+    `Занятия: ${WHO[selected.who].toLowerCase()}`,
+    `Цель: ${GOALS[selected.goal].toLowerCase()}`
+  ];
+
+  if (selected.levels !== null) {
+    lines.splice(1, 0, `Уровень: ${LEVELS[selected.levels]}`);
+  }
+
+  const quiz = quizLine();
+  if (quiz) lines.push(quiz);
+
+  const note = $("note").value.trim();
+  if (note) lines.push(`Комментарий: ${note}`);
+
+  return lines.join("\n");
 }
-function renderLevels() {
-  bookingLevel = null;
-  app.innerHTML = `<h2>Ваш уровень?</h2><p class="muted">Выберите вариант, который лучше всего вам подходит</p>`;
-  LEVELS.forEach(level => app.append(button(level, () => { bookingLevel=level; renderSlots(); })));
-  app.append(button("← Назад", renderMenu, "back"));
-}
-function renderSlots() {
-  app.innerHTML = `<h2>Выберите удобное время</h2>`;
-  SLOTS.forEach(slot => app.append(button(slot, () => {
-    const payload = {type:"booking", level:bookingLevel, slot};
-    if (tg) tg.sendData(JSON.stringify(payload));
-    app.innerHTML = `<div class="center"><div class="score">✅</div><h2>Заявка отправлена!</h2>
-      <p>${bookingLevel} · ${slot}</p><p class="muted">Мы напишем вам в Telegram.</p></div>`;
-    app.append(button("Вернуться в меню", renderMenu, "primary"));
-  })));
-  app.append(button("← Назад", renderLevels, "back"));
-}
-renderMenu();
-</script>
-</body>
-</html>
+
+document.addEventListener("click", event => {
+  const button = event.target.closest("[data-group]");
+  if (!button) return;
+
+  const group = button.dataset.group;
+  const index = Number(button.dataset.index);
+
+  selected[group] = index;
+
+  if (group === "days") {
+    selected.times = null;
+  }
+
+  $("res").hidden = true;
+  draw();
+});
+
+$("go").addEventListener("click", () => {
+  $("txt").textContent = buildText();
+  $("res").hidden = false;
+  $("res").scrollIntoView({behavior: "smooth", block: "center"});
+});
