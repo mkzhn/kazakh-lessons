@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Пробный урок казахского</title>
+<style>
+:root{--bg:#f4f7f9;--card:#fff;--tx:#14212b;--hint:#6b7c88;--acc:#0096b4;--accx:#fff;--gold:#fec50c;--line:#dfe7ec}
+@media(prefers-color-scheme:dark){:root{--bg:#0f171d;--card:#18232b;--tx:#eaf1f5;--hint:#8fa3b0;--acc:#27b5d1;--accx:#06222a;--line:#26343e}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:520px;margin:0 auto;padding:20px 16px 40px}
+header{margin-bottom:18px}
+header:before{content:"";display:block;width:48px;height:6px;border-radius:3px;background:var(--gold);margin-bottom:12px}
+h1{font-size:1.6em;line-height:1.2;margin:0 0 6px}
+.hint{color:var(--hint);margin:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+.card h2{font-size:.85em;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--hint);margin:0 0 10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:transparent;color:var(--tx);font:inherit;padding:10px 14px;border-radius:12px;cursor:pointer}
+.chip.on{background:var(--acc);border-color:var(--acc);color:var(--accx);font-weight:600}
+.btn{display:block;width:100%;padding:14px;border:0;border-radius:14px;background:var(--acc);color:var(--accx);font:inherit;font-weight:600;text-align:center;text-decoration:none;cursor:pointer;margin-top:10px}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.alt{background:transparent;border:1px solid var(--acc);color:var(--acc)}
+.res{border-color:var(--acc)}
+.res[hidden]{display:none}
+pre{margin:0 0 4px;white-space:pre-wrap;word-break:break-word;font:inherit;background:var(--bg);border-radius:12px;padding:12px;user-select:text;-webkit-user-select:text}
+ol{margin:12px 0 0;padding-left:20px;color:var(--hint);font-size:.92em}
+.score{display:inline-block;background:var(--gold);color:#14212b;border-radius:10px;padding:4px 10px;font-weight:600;font-size:.9em;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Запись на пробный урок казахского</h1>
+    <p class="hint">Выберите уровень и время, а готовое сообщение отправьте нам в Telegram.</p>
+    <div id="score"></div>
+  </header>
+
+  <div class="card"><h2>Ваш уровень</h2><div class="chips" id="levels"></div></div>
+  <div class="card"><h2>Удобное время</h2><div class="chips" id="slots"></div></div>
+  <div class="card"><h2>Для кого занятия</h2><div class="chips" id="who"></div></div>
+
+  <button class="btn" id="go" disabled>Записаться</button>
+
+  <div class="card res" id="res" hidden style="margin-top:14px">
+    <h2>Ваше сообщение</h2>
+    <pre id="txt"></pre>
+    <button class="btn" id="copy">📋 Скопировать текст</button>
+    <a class="btn alt" id="write" target="_blank" rel="noopener">✉️ Написать</a>
+    <ol><li>Скопируйте текст</li><li>Нажмите «Написать», откроется личка школы</li><li>Вставьте текст в чат и отправьте</li></ol>
+  </div>
+</div>
+
+<script>
+// ---- Настройте под себя -------------------------------------------------
+const CONTACT_USER="kaz_uroki";
+const LEVELS=["С нуля","Базовый","Средний","Продвинутый"];
+const SLOTS=["Пн 18:00","Ср 18:00","Пт 18:00","Сб 11:00"];
+const WHO=["Для себя","Для ребёнка"];
+// Порядок как в списке TOPICS в bot.py: по нему показывается результат теста.
+const TOPIC_NAMES=["Вежливость","Числа","Семья","Еда"];
+// ------------------------------------------------------------------------
+const $=id=>document.getElementById(id);
+const sel={levels:null,slots:null,who:0};
+const groups={levels:LEVELS,slots:SLOTS,who:WHO};
+
+function quizLine(){
+  const p=new URLSearchParams(location.search);
+  const t=parseInt(p.get("t"),10),s=parseInt(p.get("s"),10),n=parseInt(p.get("n"),10);
+  if(!(t>=0&&t<TOPIC_NAMES.length&&s>=0&&n>0&&s<=n&&n<100))return "";
+  return `Результат теста «${TOPIC_NAMES[t]}»: ${s} из ${n}`;
+}
+function buildText(){
+  const lines=[
+    "Здравствуйте! Хочу записаться на пробный урок казахского.",
+    "Уровень: "+LEVELS[sel.levels],
+    "Удобное время: "+SLOTS[sel.slots],
+    "Занятия: "+WHO[sel.who].toLowerCase()
+  ];
+  const q=quizLine();
+  if(q)lines.push(q);
+  return lines.join("\n");
+}
+function draw(){
+  for(const g in groups){
+    $(g).innerHTML=groups[g].map((t,i)=>`<button class="chip${sel[g]===i?" on":""}" data-g="${g}" data-i="${i}">${t}</button>`).join("");
+  }
+  $("go").disabled=sel.levels===null||sel.slots===null;
+}
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-g]");
+  if(!b)return;
+  sel[b.dataset.g]=+b.dataset.i;
+  $("res").hidden=true;
+  draw();
+});
+$("go").addEventListener("click",()=>{
+  $("txt").textContent=buildText();
+  $("res").hidden=false;
+  $("res").scrollIntoView({behavior:"smooth",block:"center"});
+});
+$("copy").addEventListener("click",async()=>{
+  const t=$("txt").textContent,b=$("copy");
+  try{await navigator.clipboard.writeText(t)}
+  catch(err){
+    const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();
+    try{document.execCommand("copy")}catch(_){}
+    a.remove();
+  }
+  b.textContent="Скопировано ✓";
+  setTimeout(()=>{b.textContent="📋 Скопировать текст"},2000);
+});
+$("write").href="https://t.me/"+CONTACT_USER;
+$("write").textContent="✉️ Написать @"+CONTACT_USER;
+const q0=quizLine();
+if(q0)$("score").innerHTML=`<span class="score">${q0}</span>`;
+draw();
+</script>
+</body>
+</html>
